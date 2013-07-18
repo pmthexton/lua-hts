@@ -76,6 +76,7 @@ function htsp:send(t)
 			error("error sending, bytes sent["..tostring(sent).."],err="..err)
 		end
 		local resp = self:recv()
+		return resp
 	else
 		error("Not connected to TVHeadend")
 	end
