@@ -52,7 +52,25 @@ function htsp:recv()
 		local respint = struct.unpack('>I4',respsize)
 		if respint > 0
 		then
-			local respbody = self._socket:recv(respint)
+			-- read the response in as many chunks as required. string concat in lua can be
+			-- slow, so store the individual chunks in a table (quicker) for concatenation when
+			-- finished reading
+			local respbody = ""
+			local resptable = {}
+			local bytesread = 0
+			while bytesread < respint
+			do
+				local sel=ls.select({self._socket},2000)
+				if type(sel) == "table"
+				then
+					local temp = self._socket:recv(respint-bytesread)
+					bytesread = bytesread + temp:len()
+					table.insert(resptable,temp)
+				else
+					error("Comms problem - timed out waiting for data chunk from TVHeadend")
+				end
+			end
+			respbody = table.concat(resptable)
 			local response = htsmsg.deserialize(respsize..respbody)
 			return response
 		else
