@@ -1,11 +1,4 @@
 local struct = require "struct"
-local table = table
-local string = string
-local type = type
-local tostring = tostring
-local pairs = pairs
-local math = math
-local error = error
 
 local MAP = 1
 local S64 = 2
