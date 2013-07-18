@@ -1,6 +1,3 @@
-local print = print
-local setmetatable = setmetatable
-local error = error
 local ls = require "lsocket"
 local crypto = require "crypto"
 local htsmsg = require "htsmsg"
@@ -11,6 +8,10 @@ local HTSP_PROTO_VERSION = 6
 local htsp = {}
 htsp.__index = htsp
 
+
+-- This adds a metatable to the htsp table which makes it a callable table.
+-- This is purely a style choice, it allows us to create htsp instances in
+-- a manner similar to C++/Java constructor calls.
 setmetatable(htsp,{
 	__call = function(cls,...)
 		return cls.new(...)
@@ -23,7 +24,6 @@ function fromhex(s)
 end
 
 function htsp:connect()
-	print("connectint to host",self.opts.host..":"..tostring(self.opts.port))
 	self._socket,err = ls.connect(self.opts.host,self.opts.port)
 	if not self._socket
 	then
@@ -76,10 +76,8 @@ function htsp:send(t)
 			error("error sending, bytes sent["..tostring(sent).."],err="..err)
 		end
 		local resp = self:recv()
-		print("Running debug, response=",htsmsg.asString(resp))
 	else
-		print("Running debug, deserialized message follows")
-		print(htsmsg.asString(htsmsg.deserialize(msg)))
+		error("Not connected to TVHeadend")
 	end
 end
 
@@ -90,12 +88,6 @@ end
 
 function htsp:hello()
 	self:send({method="hello",htspversion=HTSP_PROTO_VERSION,clientname="LuaClient"})
-end
-
-function htsp:fakechallenge()
-	self.challenge = fromhex("B0D036D835CBCE5E52DAE1E432294635F57A4432C2A1506B9376061BFD54F24D")
-	self.opts.user = "pthexton"
-	self.opts.pass = "myheadend"
 end
 
 function htsp:enableAsyncMetadata()
