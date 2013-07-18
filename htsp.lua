@@ -40,8 +40,15 @@ function htsp:authenticate()
 	self:send({method="authenticate"})
 end
 
-function htsp:recv()
-	sel=ls.select({self._socket},2000)
+function htsp:recv(option)
+	local ignoreQueue = option or false
+	-- return any previously received asynchronous messages first unless told not to
+	if ignoreQueue == false and #self.queue > 0
+	then
+		return table.remove(self.queue,1)
+	end
+
+	local sel=ls.select({self._socket},2000)
 	if type(sel)=="table"
 	then
 		local respsize=self._socket:recv(4)
@@ -84,6 +91,9 @@ end
 function htsp:send(t)
 	if self.opts.user ~= nil then t.username=self.opts.user end
 	if self.digest ~= nil then t.digest=self.digest end
+	self.seq = self.seq + 1
+	t.seq = self.seq
+
 	local msg = htsmsg.serialize(t)
 
 	if self._socket
@@ -92,6 +102,15 @@ function htsp:send(t)
 		if not sent or sent < msg:len()
 		then
 			error("error sending, bytes sent["..tostring(sent).."],err="..err)
+		end
+		local resp = {}
+		while resp.seq == nil or resp.seq ~= t.seq
+		do
+			resp = self:recv(true)
+			if resp.seq ~= t.seq
+			then
+				table.insert(self.queue,resp)
+			end
 		end
 		local resp = self:recv()
 		return resp
@@ -103,6 +122,8 @@ end
 
 function htsp:init(opts)
 	self.opts=opts
+	self.seq=0
+	self.queue={}
 end
 
 function htsp:hello()
