@@ -70,7 +70,7 @@ function htsp:recv(option)
 				local sel=ls.select({self._socket},2000)
 				if type(sel) == "table"
 				then
-					local temp = self._socket:recv(respint-bytesread)
+					local temp = self._socket:recv()
 					bytesread = bytesread + temp:len()
 					table.insert(resptable,temp)
 				else
@@ -112,7 +112,6 @@ function htsp:send(t)
 				table.insert(self.queue,resp)
 			end
 		end
-		local resp = self:recv()
 		return resp
 	else
 		error("Not connected to TVHeadend")
