@@ -70,7 +70,7 @@ function htsp:recv(option)
 				local sel=ls.select({self._socket},2000)
 				if type(sel) == "table"
 				then
-					local temp = self._socket:recv()
+					local temp = self._socket:recv(respint-bytesread)
 					bytesread = bytesread + temp:len()
 					table.insert(resptable,temp)
 				else
